@@ -1,0 +1,3 @@
+[test]
+13.233.107.156   ansible_user=ubuntu ansible_connection=ssh
+35.196.12.122   ansible_user=iqbal_hassan42 ansible_connection=ssh
