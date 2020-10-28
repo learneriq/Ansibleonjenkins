@@ -1,0 +1,58 @@
+---
+- name: installing nginx remotely
+  hosts: test
+  become: yes
+  vars: 
+    group_name: POD
+    web_config_path: /opt/html/
+  tasks:
+    
+    - name: install nginx on Debian
+      apt: name=nginx state=latest
+      when: ansible_os_family == "Debian"
+    
+    - name: install nginx on centos
+      yum: name=nginx state=latest
+      when: ansible_os_family == "RedHat"
+
+    - name: install nginx on Suse
+      zypper: name=nginx state=latest
+      when: ansible_os_family == "Suse"
+    
+    - name: creation of web path
+      file: 
+        path: "{{web_config_path}}" 
+        state: directory
+        mode: '0755'
+        
+    
+
+    - name: Configuration file
+      template: src=default_conf.j2 dest=/etc/nginx/sites-available/default
+      when: ansible_os_family == "Debian"
+      notify: 
+        - restart_nginx
+
+    - name: create symlink
+      file:
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-enabled/default
+        state: link 
+      when: ansible_os_family == "Debian"
+      notify: 
+        - restart_nginx
+
+    - name: Configuration file for centos
+      template: src=default_conf.j2 dest=/etc/nginx/default.d/nginx.conf
+      when: ansible_os_family == "RedHat"
+      notify: 
+        - restart_nginx 
+
+    - name: content html
+      template: src=index.html.j2 dest="{{web_config_path}}index.html"
+
+  handlers:
+   - name: restart_nginx
+     service: 
+      name: nginx
+      state: restarted
